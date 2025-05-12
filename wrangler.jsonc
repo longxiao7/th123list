@@ -2,9 +2,6 @@
   "name": "th123list",
   "compatibility_date": "2025-05-12",
   "main": "worker.js",
-  "assets": {
-    "directory": "./res"
-  },
   "site": {
 	"bucket": "./res"
   }
