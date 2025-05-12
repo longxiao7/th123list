@@ -11,6 +11,12 @@
 
 export default {
   async fetch(request, env, ctx) {
-    return new Response('th123list!');
+    //
+    if(request.url='https://list.th123.uno/data'){
+      let data = await fetch('https://konni.delthas.fr/games');
+      return new Response(data);
+    }else{
+      return new Response('404');
+    }
   },
 };

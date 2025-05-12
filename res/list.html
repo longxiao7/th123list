@@ -359,23 +359,13 @@
             const container = document.getElementById('games-container');
             container.innerHTML = '<div class="loading">正在加载游戏数据...</div>';
             
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-            const targetUrl = 'https://konni.delthas.fr/games';
+            //const targetUrl = 'https://konni.delthas.fr/games';
+            const targetUrl = 'https://list.th123.uno/data';
             
-            fetch(proxyUrl + targetUrl, {
+            fetch(targetUrl, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
-            })
-            .then(response => {
-                if (response.status === 403) {
-                    document.getElementById('cors-notice').style.display = 'block';
-                    throw new Error('需要请求临时访问权限');
-                }
-                if (!response.ok) {
-                    throw new Error(`HTTP 错误! 状态码: ${response.status}`);
-                }
-                return response.json();
             })
             .then(data => {
                 data.sort((a, b) => (b.start || 0) - (a.start || 0));
@@ -384,14 +374,6 @@
                 applyFilters();
             })
             .catch(error => {
-                if (error.message !== '需要请求临时访问权限') {
-                    container.innerHTML = `
-                        <div class="error">
-                            获取游戏数据失败: ${error.message}<br><br>
-                            如果这是您今天第一次使用此页面，可能需要请求临时访问权限。
-                        </div>
-                    `;
-                }
                 console.error('获取游戏数据错误:', error);
             });
         }
