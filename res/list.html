@@ -352,7 +352,9 @@
             //const targetUrl = 'https://konni.delthas.fr/games';
             const targetUrl = '/data';
             
-            fetch(targetUrl).then(
+            fetch(targetUrl)
+            .then(response => response.json())
+            .then(
 				data => {
 					data.sort((a, b) => (b.start || 0) - (a.start || 0));
 					allGames = data;
