@@ -6,7 +6,6 @@
     "directory": "./res"
   },
   "site": {
-	"bucket": "./res",
-	"entry-point": "/"
+	"bucket": "./res"
   }
 }
