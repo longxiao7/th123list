@@ -226,10 +226,6 @@
         </div>
     </div>
     <button class="refresh-btn" onclick="fetchGames()">刷新数据</button>
-    <div id="cors-notice" class="cors-notice" style="display: none;">
-        <p>首次使用需要请求临时访问权限：</p>
-        <button onclick="requestCorsAccess()">请求临时访问权限</button>
-    </div>
     <div id="games-container">
         <div class="loading">正在加载游戏数据...</div>
     </div>
@@ -349,33 +345,23 @@
             });
         }
 
-        function requestCorsAccess() {
-            window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank');
-            document.getElementById('cors-notice').style.display = 'none';
-            setTimeout(fetchGames, 2000);
-        }
-
         function fetchGames() {
             const container = document.getElementById('games-container');
             container.innerHTML = '<div class="loading">正在加载游戏数据...</div>';
             
             //const targetUrl = 'https://konni.delthas.fr/games';
-            const targetUrl = 'https://list.th123.uno/data';
+            const targetUrl = '/data';
             
-            fetch(targetUrl, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(data => {
-                data.sort((a, b) => (b.start || 0) - (a.start || 0));
-                allGames = data;
-                updateCountryFilterOptions(data);
-                applyFilters();
-            })
-            .catch(error => {
-                console.error('获取游戏数据错误:', error);
-            });
+            fetch(targetUrl).then(
+				data => {
+					data.sort((a, b) => (b.start || 0) - (a.start || 0));
+					allGames = data;
+					updateCountryFilterOptions(data);
+					applyFilters();
+				})
+				.catch(error => {
+					console.error('获取游戏数据错误:', error);
+				});
         }
 
         function updateCountryFilterOptions(games) {
