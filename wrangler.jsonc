@@ -1,0 +1,8 @@
+{
+  "name": "th123list",
+  "compatibility_date": "2025-05-12",
+  "main": "workers.js"
+  "assets": {
+    "directory": "./res"
+  }
+}
