@@ -12,7 +12,8 @@ export default {
         );
       return result;
     }else{
-      return new Response('4042');
+      const assetRequest = new Request(new URL('/list.html', request.url));
+      return await env.ASSETS.fetch(assetRequest);
     }
-  },
+  }
 };

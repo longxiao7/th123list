@@ -4,5 +4,9 @@
   "main": "worker.js",
   "assets": {
     "directory": "./res"
+  },
+  "site": {
+	"bucket": "./res",
+	"entry-point": "/"
   }
 }
