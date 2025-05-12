@@ -1,3 +1,5 @@
+import htmlContent from './res/list.html' assert { type: 'text' };
+
 export default {
   async fetch(request, env, ctx) {
     //
@@ -12,8 +14,9 @@ export default {
         );
       return result;
     }else{
-      const assetRequest = new Request(new URL('/list.html', request.url));
-      return await env.ASSETS.fetch(assetRequest);
+      return new Response(htmlContent, {
+        headers: { 'Content-Type': 'text/html' }
+      });
     }
   }
 };
