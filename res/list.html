@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>非想天则游戏大厅主机列表</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .filter-label {
+            margin-right: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        .filter-btn {
+            padding: 6px 12px;
+            margin: 0 4px;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            background-color: #d1e7ff;
+        }
+        .filter-btn.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+        .game-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .game-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .game-time {
+            color: #666;
+            font-size: 14px;
+        }
+        .game-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .game-details div {
+            display: flex;
+            align-items: center;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+            margin-right: 5px;
+        }
+        .refresh-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .refresh-btn:hover {
+            background-color: #45a049;
+        }
+        .status {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .status-true {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .status-false {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        .error {
+            color: #a94442;
+            background-color: #f2dede;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .cors-notice {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .flag-icon {
+            width: 16px;
+            height: 12px;
+            margin-right: 5px;
+            border: 1px solid #ddd;
+        }
+        .no-games {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .ip-address {
+            cursor: pointer;
+            position: relative;
+        }
+        .ip-address:hover {
+            text-decoration: underline;
+            color: #0d6efd;
+        }
+        .copy-tooltip {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .ip-address:hover .copy-tooltip {
+            opacity: 1;
+        }
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .copy-notification.show {
+            opacity: 1;
+        }
+        .character-name {
+            font-size: 12px;
+            color: #666;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>非想天则游戏大厅主机列表</h1>
+    <div class="filter-bar">
+        <div class="filter-group">
+            <span class="filter-label">对战状态:</span>
+            <button class="filter-btn active" data-filter="started" data-value="all">全部</button>
+            <button class="filter-btn" data-filter="started" data-value="true">已开始</button>
+            <button class="filter-btn" data-filter="started" data-value="false">未开始</button>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">观战状态:</span>
+            <button class="filter-btn active" data-filter="spectatable" data-value="all">全部</button>
+            <button class="filter-btn" data-filter="spectatable" data-value="true">可观战</button>
+            <button class="filter-btn" data-filter="spectatable" data-value="false">不可观战</button>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">国家筛选:</span>
+            <select class="filter-select" data-filter="country">
+                <option value="all">全部国家</option>
+                <!-- 国家选项将通过JS动态添加 -->
+            </select>
+        </div>
+    </div>
+    <button class="refresh-btn" onclick="fetchGames()">刷新数据</button>
+    <div id="cors-notice" class="cors-notice" style="display: none;">
+        <p>首次使用需要请求临时访问权限：</p>
+        <button onclick="requestCorsAccess()">请求临时访问权限</button>
+    </div>
+    <div id="games-container">
+        <div class="loading">正在加载游戏数据...</div>
+    </div>
+    <div id="copy-notification" class="copy-notification">IP地址已复制!</div>
+
+    <script>
+        // 完整的国家代码到中文名称的映射
+        const countryNames = {
+            'af': '阿富汗', 'ax': '奥兰群岛', 'al': '阿尔巴尼亚', 'dz': '阿尔及利亚', 'as': '美属萨摩亚',
+            'ad': '安道尔', 'ao': '安哥拉', 'ai': '安圭拉', 'aq': '南极洲', 'ag': '安提瓜和巴布达',
+            'ar': '阿根廷', 'am': '亚美尼亚', 'aw': '阿鲁巴', 'au': '澳大利亚', 'at': '奥地利',
+            'az': '阿塞拜疆', 'bs': '巴哈马', 'bh': '巴林', 'bd': '孟加拉国', 'bb': '巴巴多斯',
+            'by': '白俄罗斯', 'be': '比利时', 'bz': '伯利兹', 'bj': '贝宁', 'bm': '百慕大',
+            'bt': '不丹', 'bo': '玻利维亚', 'bq': '博奈尔', 'ba': '波斯尼亚和黑塞哥维那', 'bw': '博茨瓦纳',
+            'bv': '布韦岛', 'br': '巴西', 'io': '英属印度洋领地', 'bn': '文莱', 'bg': '保加利亚',
+            'bf': '布基纳法索', 'bi': '布隆迪', 'cv': '佛得角', 'kh': '柬埔寨', 'cm': '喀麦隆',
+            'ca': '加拿大', 'ky': '开曼群岛', 'cf': '中非共和国', 'td': '乍得', 'cl': '智利',
+            'cn': '中国', 'cx': '圣诞岛', 'cc': '科科斯(基林)群岛', 'co': '哥伦比亚', 'km': '科摩罗',
+            'cg': '刚果(布)', 'cd': '刚果(金)', 'ck': '库克群岛', 'cr': '哥斯达黎加', 'ci': '科特迪瓦',
+            'hr': '克罗地亚', 'cu': '古巴', 'cw': '库拉索', 'cy': '塞浦路斯', 'cz': '捷克',
+            'dk': '丹麦', 'dj': '吉布提', 'dm': '多米尼克', 'do': '多米尼加', 'ec': '厄瓜多尔',
+            'eg': '埃及', 'sv': '萨尔瓦多', 'gq': '赤道几内亚', 'er': '厄立特里亚', 'ee': '爱沙尼亚',
+            'sz': '斯威士兰', 'et': '埃塞俄比亚', 'fk': '福克兰群岛(马尔维纳斯)', 'fo': '法罗群岛', 'fj': '斐济',
+            'fi': '芬兰', 'fr': '法国', 'gf': '法属圭亚那', 'pf': '法属波利尼西亚', 'tf': '法属南部领地',
+            'ga': '加蓬', 'gm': '冈比亚', 'ge': '格鲁吉亚', 'de': '德国', 'gh': '加纳',
+            'gi': '直布罗陀', 'gr': '希腊', 'gl': '格陵兰', 'gd': '格林纳达', 'gp': '瓜德罗普',
+            'gu': '关岛', 'gt': '危地马拉', 'gg': '根西岛', 'gn': '几内亚', 'gw': '几内亚比绍',
+            'gy': '圭亚那', 'ht': '海地', 'hm': '赫德岛和麦克唐纳群岛', 'va': '梵蒂冈', 'hn': '洪都拉斯',
+            'hk': '中国香港', 'hu': '匈牙利', 'is': '冰岛', 'in': '印度', 'id': '印度尼西亚',
+            'ir': '伊朗', 'iq': '伊拉克', 'ie': '爱尔兰', 'im': '马恩岛', 'il': '以色列',
+            'it': '意大利', 'jm': '牙买加', 'jp': '日本', 'je': '泽西岛', 'jo': '约旦',
+            'kz': '哈萨克斯坦', 'ke': '肯尼亚', 'ki': '基里巴斯', 'kp': '朝鲜', 'kr': '韩国',
+            'kw': '科威特', 'kg': '吉尔吉斯斯坦', 'la': '老挝', 'lv': '拉脱维亚', 'lb': '黎巴嫩',
+            'ls': '莱索托', 'lr': '利比里亚', 'ly': '利比亚', 'li': '列支敦士登', 'lt': '立陶宛',
+            'lu': '卢森堡', 'mo': '中国澳门', 'mg': '马达加斯加', 'mw': '马拉维', 'my': '马来西亚',
+            'mv': '马尔代夫', 'ml': '马里', 'mt': '马耳他', 'mh': '马绍尔群岛', 'mq': '马提尼克',
+            'mr': '毛里塔尼亚', 'mu': '毛里求斯', 'yt': '马约特', 'mx': '墨西哥', 'fm': '密克罗尼西亚',
+            'md': '摩尔多瓦', 'mc': '摩纳哥', 'mn': '蒙古', 'me': '黑山', 'ms': '蒙特塞拉特',
+            'ma': '摩洛哥', 'mz': '莫桑比克', 'mm': '缅甸', 'na': '纳米比亚', 'nr': '瑙鲁',
+            'np': '尼泊尔', 'nl': '荷兰', 'nc': '新喀里多尼亚', 'nz': '新西兰', 'ni': '尼加拉瓜',
+            'ne': '尼日尔', 'ng': '尼日利亚', 'nu': '纽埃', 'nf': '诺福克岛', 'mk': '北马其顿',
+            'mp': '北马里亚纳群岛', 'no': '挪威', 'om': '阿曼', 'pk': '巴基斯坦', 'pw': '帕劳',
+            'ps': '巴勒斯坦', 'pa': '巴拿马', 'pg': '巴布亚新几内亚', 'py': '巴拉圭', 'pe': '秘鲁',
+            'ph': '菲律宾', 'pn': '皮特凯恩群岛', 'pl': '波兰', 'pt': '葡萄牙', 'pr': '波多黎各',
+            'qa': '卡塔尔', 're': '留尼汪', 'ro': '罗马尼亚', 'ru': '俄罗斯', 'rw': '卢旺达',
+            'bl': '圣巴泰勒米', 'sh': '圣赫勒拿', 'kn': '圣基茨和尼维斯', 'lc': '圣卢西亚', 'mf': '法属圣马丁',
+            'pm': '圣皮埃尔和密克隆', 'vc': '圣文森特和格林纳丁斯', 'ws': '萨摩亚', 'sm': '圣马力诺', 'st': '圣多美和普林西比',
+            'sa': '沙特阿拉伯', 'sn': '塞内加尔', 'rs': '塞尔维亚', 'sc': '塞舌尔', 'sl': '塞拉利昂',
+            'sg': '新加坡', 'sx': '荷属圣马丁', 'sk': '斯洛伐克', 'si': '斯洛文尼亚', 'sb': '所罗门群岛',
+            'so': '索马里', 'za': '南非', 'gs': '南乔治亚和南桑威奇群岛', 'ss': '南苏丹', 'es': '西班牙',
+            'lk': '斯里兰卡', 'sd': '苏丹', 'sr': '苏里南', 'sj': '斯瓦尔巴和扬马延', 'se': '瑞典',
+            'ch': '瑞士', 'sy': '叙利亚', 'tw': '中国台湾', 'tj': '塔吉克斯坦', 'tz': '坦桑尼亚',
+            'th': '泰国', 'tl': '东帝汶', 'tg': '多哥', 'tk': '托克劳', 'to': '汤加',
+            'tt': '特立尼达和多巴哥', 'tn': '突尼斯', 'tr': '土耳其', 'tm': '土库曼斯坦', 'tc': '特克斯和凯科斯群岛',
+            'tv': '图瓦卢', 'ug': '乌干达', 'ua': '乌克兰', 'ae': '阿联酋', 'gb': '英国',
+            'us': '美国', 'um': '美国本土外小岛屿', 'uy': '乌拉圭', 'uz': '乌兹别克斯坦', 'vu': '瓦努阿图',
+            've': '委内瑞拉', 'vn': '越南', 'vg': '英属维尔京群岛', 'vi': '美属维尔京群岛', 'wf': '瓦利斯和富图纳',
+            'eh': '西撒哈拉', 'ye': '也门', 'zm': '赞比亚', 'zw': '津巴布韦'
+        };
+
+        // 角色名称映射
+        const characterNames = {
+            'reimu': '灵梦',
+            'marisa': '魔理沙',
+            'sakuya': '咲夜', 
+            'alice': '爱丽丝',
+            'patchouli': '帕秋莉',
+            'youmu': '妖梦',
+            'remilia': '蕾米莉亚',
+            'yuyuko': '幽幽子',
+            'yukari': '紫',
+            'suika': '萃香',
+            'reisen': '铃仙',
+            'aya': '文',
+            'komachi': '小町',
+            'iku': '衣玖',
+            'tenshi': '天子',
+            'sanae': '早苗',
+            'cirno': '琪露诺',
+            'meiling': '美铃',
+            'utsuho': '空',
+            'suwako': '诹访子'
+        };
+
+        let allGames = []; // 存储所有游戏数据
+        let currentFilters = {
+            started: 'all',
+            spectatable: 'all',
+            country: 'all'
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchGames();
+            setupFilterButtons();
+        });
+
+        function setupFilterButtons() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filterType = this.dataset.filter;
+                    const filterValue = this.dataset.value;
+                    
+                    currentFilters[filterType] = filterValue;
+                    
+                    document.querySelectorAll(`.filter-btn[data-filter="${filterType}"]`).forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    applyFilters();
+                });
+            });
+            
+            document.querySelector('.filter-select').addEventListener('change', function() {
+                currentFilters.country = this.value;
+                applyFilters();
+            });
+        }
+
+        function requestCorsAccess() {
+            window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank');
+            document.getElementById('cors-notice').style.display = 'none';
+            setTimeout(fetchGames, 2000);
+        }
+
+        function fetchGames() {
+            const container = document.getElementById('games-container');
+            container.innerHTML = '<div class="loading">正在加载游戏数据...</div>';
+            
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            const targetUrl = 'https://konni.delthas.fr/games';
+            
+            fetch(proxyUrl + targetUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.status === 403) {
+                    document.getElementById('cors-notice').style.display = 'block';
+                    throw new Error('需要请求临时访问权限');
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP 错误! 状态码: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                data.sort((a, b) => (b.start || 0) - (a.start || 0));
+                allGames = data;
+                updateCountryFilterOptions(data);
+                applyFilters();
+            })
+            .catch(error => {
+                if (error.message !== '需要请求临时访问权限') {
+                    container.innerHTML = `
+                        <div class="error">
+                            获取游戏数据失败: ${error.message}<br><br>
+                            如果这是您今天第一次使用此页面，可能需要请求临时访问权限。
+                        </div>
+                    `;
+                }
+                console.error('获取游戏数据错误:', error);
+            });
+        }
+
+        function updateCountryFilterOptions(games) {
+            const countrySelect = document.querySelector('.filter-select');
+            
+            while (countrySelect.options.length > 1) {
+                countrySelect.remove(1);
+            }
+            
+            const countries = new Set();
+            games.forEach(game => {
+                if (game.host_country) countries.add(game.host_country.toLowerCase());
+                if (game.client_country) countries.add(game.client_country.toLowerCase());
+            });
+            
+            Array.from(countries).sort().forEach(countryCode => {
+                const option = document.createElement('option');
+                option.value = countryCode;
+                option.textContent = countryNames[countryCode] || countryCode.toUpperCase();
+                countrySelect.appendChild(option);
+            });
+        }
+
+        function applyFilters() {
+            const filteredGames = allGames.filter(game => {
+                if (currentFilters.started !== 'all') {
+                    if (currentFilters.started === 'true' && !game.started) return false;
+                    if (currentFilters.started === 'false' && game.started) return false;
+                }
+                
+                if (currentFilters.spectatable !== 'all') {
+                    if (currentFilters.spectatable === 'true' && !game.spectatable) return false;
+                    if (currentFilters.spectatable === 'false' && game.spectatable) return false;
+                }
+                
+                if (currentFilters.country !== 'all') {
+                    const hostCountry = game.host_country ? game.host_country.toLowerCase() : '';
+                    const clientCountry = game.client_country ? game.client_country.toLowerCase() : '';
+                    if (hostCountry !== currentFilters.country && clientCountry !== currentFilters.country) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            displayGames(filteredGames);
+        }
+
+        function showCopyNotification() {
+            const notification = document.getElementById('copy-notification');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showCopyNotification();
+        }
+
+        function setupIpCopyHandler(ipElement, ipAddress) {
+            ipElement.classList.add('ip-address');
+            ipElement.innerHTML = `
+                <span class="label">IP地址:</span> 
+                <span class="ip-text">${ipAddress || 'N/A'}</span>
+                <span class="copy-tooltip">点击复制IP地址</span>
+            `;
+            
+            if (ipAddress && ipAddress !== 'N/A') {
+                ipElement.addEventListener('click', () => {
+                    copyToClipboard(ipAddress);
+                });
+            }
+        }
+
+        function getCharacterDisplayName(characterName) {
+            if (!characterName) return '';
+            
+            // 转换为小写并去除前后空格
+            const nameKey = characterName.toLowerCase().trim();
+            
+            // 查找匹配的角色名称
+            for (const [key, value] of Object.entries(characterNames)) {
+                if (nameKey.includes(key)) {
+                    return value;
+                }
+            }
+            
+            return characterName; // 如果没有匹配，返回原始名称
+        }
+
+        function displayGames(games) {
+            const container = document.getElementById('games-container');
+            
+            if (!games || games.length === 0) {
+                container.innerHTML = '<div class="no-games">没有找到符合条件的对战</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            games.forEach(game => {
+                const gameElement = document.createElement('div');
+                gameElement.className = 'game-container';
+                
+                // 第一行：标题和时间
+                const header = document.createElement('div');
+                header.className = 'game-header';
+                
+                const title = document.createElement('div');
+                title.className = 'game-title';
+                
+                // 构建主机名称显示
+                const hostcharacter = game.host_character ? getCharacterDisplayName(game.host_character) : '';
+                const clientcharacter = game.client_character ? getCharacterDisplayName(game.client_character) : '';
+                
+                title.innerHTML = `
+                    ${game.host_name || '未知玩家'}
+                    ${hostcharacter ? `<span class="character-name">(${hostcharacter})</span>` : ''}
+                    vs 
+                    ${game.client_name || '未知玩家'}
+                    ${clientcharacter ? `<span class="character-name">(${clientcharacter})</span>` : ''}
+                `;
+                
+                const time = document.createElement('div');
+                time.className = 'game-time';
+                time.textContent = game.start ? new Date(game.start * 1000).toLocaleString() : '时间未知';
+                
+                header.appendChild(title);
+                header.appendChild(time);
+                gameElement.appendChild(header);
+                
+                // 第二行：国家和IP
+                const row1 = document.createElement('div');
+                row1.className = 'game-details';
+                
+                const hostCountry = document.createElement('div');
+                hostCountry.innerHTML = `
+                    <span class="label">主机国家:</span>
+                    <img src="https://flagcdn.com/16x12/${game.host_country ? game.host_country.toLowerCase() : 'unknown'}.png" 
+                         class="flag-icon" 
+                         alt="${game.host_country || '未知'}">
+                    ${countryNames[game.host_country] || game.host_country || '未知'}
+                `;
+                
+                const clientCountry = document.createElement('div');
+                clientCountry.innerHTML = `
+                    <span class="label">客机国家:</span>
+                    <img src="https://flagcdn.com/16x12/${game.client_country ? game.client_country.toLowerCase() : 'unknown'}.png" 
+                         class="flag-icon" 
+                         alt="${game.client_country || '未知'}">
+                    ${countryNames[game.client_country] || game.client_country || '未知'}
+                `;
+                
+                row1.appendChild(hostCountry);
+                row1.appendChild(clientCountry);
+                gameElement.appendChild(row1);
+                
+                // 第三行：状态信息
+                const row2 = document.createElement('div');
+                row2.className = 'game-details';
+                
+                const ipInfo = document.createElement('div');
+                setupIpCopyHandler(ipInfo, game.ip);
+                
+                const statusInfo = document.createElement('div');
+                statusInfo.innerHTML = `
+                    <span class="label">状态:</span>
+                    <span class="status status-${game.started}">${game.started ? '已开始' : '未开始'}</span>
+                    <span class="status status-${game.ranked}">${game.ranked ? '排位赛' : '休闲赛'}</span>
+                    <span class="status status-${game.spectatable}">${game.spectatable ? '可观战' : '不可观战'}</span>
+                `;
+                
+                row2.appendChild(ipInfo);
+                row2.appendChild(statusInfo);
+                gameElement.appendChild(row2);
+                
+                container.appendChild(gameElement);
+            });
+        }
+    </script>
+</body>
+</html>
