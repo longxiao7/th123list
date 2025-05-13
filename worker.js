@@ -1,5 +1,5 @@
 import htmlContent from './res/list.html' assert { type: 'text' };
-
+import allhtmlContent from './res/all.html' assert { type: 'text' };
 export default {
   async fetch(request, env, ctx) {
     //
@@ -13,10 +13,14 @@ export default {
         }
         );
       return result;
-    }else{
-      return new Response(htmlContent, {
+    }
+    if(/all$/.test(request.url)){
+      return new Response(allhtmlContent, {
         headers: { 'Content-Type': 'text/html' }
       });
     }
+    return new Response(htmlContent, {
+        headers: { 'Content-Type': 'text/html' }
+      });
   }
 };
